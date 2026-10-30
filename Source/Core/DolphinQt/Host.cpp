@@ -180,10 +180,18 @@ void Host::SetRenderWindowInfo(void* new_handle, int new_width, int new_height, 
     else
       m_render_handle = new_handle;
   }
-  if (g_presenter)
+  if (!g_presenter)
+    return;
+
+  if (new_handle)
+  {
     g_presenter->ChangeSurface(new_handle, new_width, new_height, new_scale);
-  if (g_presenter && new_handle)
     g_controller_interface.ChangeWindow(new_handle);
+  }
+  else
+  {
+    g_presenter->ResizeSurface(new_width, new_height, new_scale);
+  }
 }
 
 std::vector<std::string> Host_GetPreferredLocales()

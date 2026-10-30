@@ -12,6 +12,7 @@
 #include "VideoCommon/VideoCommon.h"
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -93,17 +94,17 @@ public:
   VideoCommon::PostProcessing* GetPostProcessor() const { return m_post_processor.get(); }
   // Final surface changing
   // This is called when the surface is resized (WX) or the window changes (Android).
+  // The handle may be null (e.g. Android destroying its surface), so handle changes are tracked
+  // explicitly instead of by checking for a null handle.
   void ChangeSurface(void* new_surface_handle, u32 width, u32 height, float scale);
-  void ResizeSurface(u32 width, u32 height, float scale)
-  {
-    ChangeSurface(nullptr, width, height, scale);
-  }
+  void ResizeSurface(u32 width, u32 height, float scale);
   struct SurfaceChangedInfo
   {
-    void* new_handle;  ///< New surface handle if changed, else null
-    int new_width;     ///< New surface width
-    int new_height;    ///< New surface height
-    float new_scale;   ///< New surface scale
+    bool handle_changed;  ///< True if the surface handle changed (new_handle may still be null)
+    void* new_handle;     ///< New surface handle, only valid if handle_changed
+    int new_width;        ///< New surface width
+    int new_height;       ///< New surface height
+    float new_scale;      ///< New surface scale
   };
   std::optional<SurfaceChangedInfo> SurfaceChangedTestAndClear()
   {
@@ -156,6 +157,7 @@ private:
   AbstractTextureFormat m_backbuffer_format = AbstractTextureFormat::Undefined;
 
   void* m_new_surface_handle = nullptr;
+  bool m_new_surface_handle_changed = false;
   int m_new_surface_width = 0;
   int m_new_surface_height = 0;
   float m_new_surface_scale = 1.f;

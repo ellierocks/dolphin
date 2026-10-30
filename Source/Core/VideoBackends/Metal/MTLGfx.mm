@@ -490,8 +490,8 @@ void Metal::Gfx::CheckForSurfaceChange()
 {
   if (auto change_info = g_presenter->SurfaceChangedTestAndClear())
   {
-    if (void* handle = change_info->new_handle)
-      m_layer = MRCRetain(static_cast<CAMetalLayer*>(handle));
+    if (change_info->handle_changed)
+      m_layer = MRCRetain(static_cast<CAMetalLayer*>(change_info->new_handle));
     SetupSurface(change_info->new_width, change_info->new_height, change_info->new_scale);
   }
 }

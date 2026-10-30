@@ -367,7 +367,7 @@ void VKGfx::CheckForSurfaceChange()
   // Clear the present failed flag, since we don't want to resize after recreating.
   g_command_buffer_mgr->CheckLastPresentFail();
 
-  if (change_info->new_handle)
+  if (change_info->handle_changed)
   {
     // Recreate the surface. If this fails we're in trouble.
     if (!m_swap_chain->RecreateSurface(change_info->new_handle,  //

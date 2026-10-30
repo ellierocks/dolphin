@@ -184,15 +184,15 @@ void Gfx::OnConfigChanged(u32 bits)
 
 void Gfx::CheckForSwapChainChanges()
 {
-  const bool surface_changed = g_presenter->SurfaceChangedTestAndClear();
-  const bool surface_resized =
-      g_presenter->SurfaceResizedTestAndClear() || m_swap_chain->CheckForFullscreenChange();
+  const auto change_info = g_presenter->SurfaceChangedTestAndClear();
+  const bool surface_changed = change_info && change_info->handle_changed;
+  const bool surface_resized = change_info || m_swap_chain->CheckForFullscreenChange();
   if (!surface_changed && !surface_resized)
     return;
 
   if (surface_changed)
   {
-    m_swap_chain->ChangeSurface(g_presenter->GetNewSurfaceHandle());
+    m_swap_chain->ChangeSurface(change_info->new_handle);
   }
   else
   {

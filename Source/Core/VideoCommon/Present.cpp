@@ -590,14 +590,22 @@ void Presenter::ReleaseXFBContentLock()
 void Presenter::ChangeSurface(void* new_surface_handle, u32 width, u32 height, float scale)
 {
   std::lock_guard<std::mutex> lock(m_swap_mutex);
-  // If you ChangeSurface then ResizeSurface, don't forget about the surface change
-  // (null new_surface_handle => ResizeSurface)
-  if (new_surface_handle)
-    m_new_surface_handle = new_surface_handle;
+  m_new_surface_handle = new_surface_handle;
+  m_new_surface_handle_changed = true;
   m_new_surface_width = width;
   m_new_surface_height = height;
   m_new_surface_scale = scale;
   // Actual data is accessed under the mutex, so this can be relaxed
+  m_surface_changed.store(true, std::memory_order_relaxed);
+}
+
+void Presenter::ResizeSurface(u32 width, u32 height, float scale)
+{
+  std::lock_guard<std::mutex> lock(m_swap_mutex);
+  // If you ChangeSurface then ResizeSurface, the surface handle change is still pending
+  m_new_surface_width = width;
+  m_new_surface_height = height;
+  m_new_surface_scale = scale;
   m_surface_changed.store(true, std::memory_order_relaxed);
 }
 
@@ -606,12 +614,14 @@ Presenter::SurfaceChangedInfo Presenter::SurfaceChangedGetAndClear()
   std::lock_guard<std::mutex> lock(m_swap_mutex);
   SurfaceChangedInfo info = {};
   // clang-format off
-  info.new_handle = m_new_surface_handle;
-  info.new_width  = m_new_surface_width;
-  info.new_height = m_new_surface_height;
-  info.new_scale  = m_new_surface_scale;
+  info.handle_changed = m_new_surface_handle_changed;
+  info.new_handle     = m_new_surface_handle;
+  info.new_width      = m_new_surface_width;
+  info.new_height     = m_new_surface_height;
+  info.new_scale      = m_new_surface_scale;
   // clang-format on
   m_new_surface_handle = nullptr;
+  m_new_surface_handle_changed = false;
   m_surface_changed.store(false, std::memory_order_relaxed);
   return info;
 }

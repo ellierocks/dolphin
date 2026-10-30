@@ -454,7 +454,11 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceChang
     __android_log_print(ANDROID_LOG_ERROR, DOLPHIN_TAG, "Error: Surface is null.");
 
   if (g_presenter)
-    g_presenter->ChangeSurface(s_surf);
+  {
+    const u32 width = s_surf ? ANativeWindow_getWidth(s_surf) : 0;
+    const u32 height = s_surf ? ANativeWindow_getHeight(s_surf) : 0;
+    g_presenter->ChangeSurface(s_surf, width, height, 1.0f);
+  }
 
   s_surface_cv.notify_all();
 }
@@ -477,7 +481,7 @@ JNIEXPORT void JNICALL Java_org_dolphinemu_dolphinemu_NativeLibrary_SurfaceDestr
   std::lock_guard surface_guard(s_surface_lock);
 
   if (g_presenter)
-    g_presenter->ChangeSurface(nullptr);
+    g_presenter->ChangeSurface(nullptr, 0, 0, 1.0f);
 
   if (s_surf)
   {
@@ -571,6 +575,8 @@ static void Run(JNIEnv* env, std::unique_ptr<BootParameters>&& boot, bool riivol
   s_surface_cv.wait(surface_guard, []() { return s_surf != nullptr; });
 
   WindowSystemInfo wsi(WindowSystemType::Android, nullptr, s_surf, s_surf);
+  wsi.render_surface_width = ANativeWindow_getWidth(s_surf);
+  wsi.render_surface_height = ANativeWindow_getHeight(s_surf);
   wsi.render_surface_scale = GetRenderSurfaceScale(env);
 
   if (BootManager::BootCore(Core::System::GetInstance(), std::move(boot), wsi))

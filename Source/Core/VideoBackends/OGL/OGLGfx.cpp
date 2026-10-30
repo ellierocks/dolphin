@@ -460,8 +460,9 @@ void OGLGfx::CheckForSurfaceChange()
 {
   if (auto change_info = g_presenter->SurfaceChangedTestAndClear())
   {
-    if (void* handle = change_info->new_handle)
-      m_main_gl_context->UpdateSurface(handle, change_info->new_width, change_info->new_height);
+    if (change_info->handle_changed)
+      m_main_gl_context->UpdateSurface(change_info->new_handle, change_info->new_width,
+                                       change_info->new_height);
     else
       m_main_gl_context->Update(change_info->new_width, change_info->new_height);
 

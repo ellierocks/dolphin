@@ -34,7 +34,6 @@ public:
   // null new_handle => resize
   void SetRenderWindowInfo(void* new_handle, int new_width, int new_height, float new_scale);
   void SetTASInputFocus(bool focus);
-  void ResizeSurface(int new_width, int new_height);
 
 signals:
   void RequestTitle(const QString& title);

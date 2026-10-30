@@ -172,6 +172,8 @@ void Host::SetTASInputFocus(const bool focus)
 
 void Host::SetRenderWindowInfo(void* new_handle, int new_width, int new_height, float new_scale)
 {
+  g_controller_interface.SetRenderSurfaceSize(new_width, new_height, new_scale);
+
   if (new_handle)
   {
     m_render_to_main = Config::Get(Config::MAIN_RENDER_TO_MAIN);

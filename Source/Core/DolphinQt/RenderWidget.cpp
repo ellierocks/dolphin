@@ -17,6 +17,10 @@
 #include <QTimer>
 #include <QWindow>
 
+#ifdef HAVE_WAYLAND_PROTOCOLS
+#include "Common/Wayland/ContentType.h"
+#endif
+
 #include "Core/Config/MainSettings.h"
 #include "Core/Core.h"
 #include "Core/State.h"
@@ -35,6 +39,29 @@
 #include <windows.h>
 #include <dwmapi.h>
 #endif
+
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__HAIKU__)
+#include <qpa/qplatformnativeinterface.h>
+#endif
+
+namespace
+{
+// The handle the video backends and controller interface use to identify the render surface.
+// On most platforms this is the window id, but a Wayland window is identified by its wl_surface,
+// which is not what Qt calls the window id.
+void* GetRenderSurfaceHandle(QWidget* widget)
+{
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__HAIKU__)
+  if (QGuiApplication::platformName().startsWith(QStringLiteral("wayland")))
+  {
+    QWindow* const window = widget->windowHandle();
+    QPlatformNativeInterface* const pni = QGuiApplication::platformNativeInterface();
+    return (window && pni) ? pni->nativeResourceForWindow("surface", window) : nullptr;
+  }
+#endif
+  return reinterpret_cast<void*>(widget->winId());
+}
+}  // namespace
 
 RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
 {
@@ -461,7 +488,19 @@ bool RenderWidget::event(QEvent* event)
     void* handle = nullptr;
     if (event->type() == QEvent::WinIdChange)
     {
-      handle = reinterpret_cast<void*>(winId());
+      handle = GetRenderSurfaceHandle(this);
+#ifdef HAVE_WAYLAND_PROTOCOLS
+      // Compositors use this to enable adaptive sync (VRR) for games, and to prefer low latency.
+      if (handle && QGuiApplication::platformName().startsWith(QStringLiteral("wayland")))
+      {
+        QWindow* const window_handle = windowHandle();
+        void* const display =
+            QGuiApplication::platformNativeInterface()->nativeResourceForWindow("display",
+                                                                                window_handle);
+        Common::Wayland::SetSurfaceContentTypeGame(static_cast<wl_display*>(display),
+                                                   static_cast<wl_surface*>(handle));
+      }
+#endif
 #ifdef _WIN32
       // Remove rounded corners from the render window on Windows 11
       const DWM_WINDOW_CORNER_PREFERENCE corner_preference = DWMWCP_DONOTROUND;

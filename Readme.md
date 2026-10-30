@@ -63,6 +63,26 @@ Android apps are compiled using a build system called Gradle. Dolphin's native c
 however, is compiled using CMake. The Gradle script will attempt to run a CMake build
 automatically while building the Java code.
 
+### Wayland (Linux)
+
+When built with `ENABLE_WAYLAND` (the default) and run with `QT_QPA_PLATFORM=wayland`, Dolphin
+runs as a native Wayland client without XWayland. This needs the Wayland client library, and for
+full functionality `wayland-scanner`, `wayland-protocols` 1.41 or newer and `xkbcommon`. Without
+the last three the window still works, but keyboard/mouse input and the VRR hint are unavailable
+and CMake prints a warning.
+
+* **VRR.** The render surface sets the `wp_content_type_v1` "game" hint, so compositors that act
+  on it can enable adaptive sync for Dolphin. Dolphin never creates `wp_tearing_control` objects.
+  Use the Vulkan or OpenGL (EGL) backend and enable V-Sync, then fullscreen the render window.
+  On Hyprland, `misc:vrr = 2` enables VRR for fullscreen windows only; check it with
+  `hyprctl monitors -j` (`vrr`).
+* **Input.** Wayland has no global input, so keyboard and mouse devices appear under the
+  `Wayland` source, one per seat (for example `Wayland/0/seat0`), and only receive input while a
+  Dolphin window has focus. Hotkeys and controller mappings made with `XInput2/0/Virtual core
+  pointer` need to be rebound to the Wayland device. Key names match the XInput2 ones.
+* **Center Mouse.** Uses `wp_pointer_warp_v1` where the compositor supports it, otherwise the
+  cursor position is offset in software. Cursor locking is not implemented on Wayland.
+
 ## Uninstalling
 
 On Windows, simply remove the extracted directory, unless it was installed with the NSIS installer,

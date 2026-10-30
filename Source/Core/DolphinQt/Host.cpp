@@ -191,6 +191,13 @@ void Host::ResizeSurface(int new_width, int new_height)
     g_presenter->ResizeSurface();
 }
 
+void Host::SetRenderSurfaceSize(int width, int height, float scale)
+{
+  g_controller_interface.SetRenderSurfaceSize(width, height, scale);
+  if (g_presenter)
+    g_presenter->SetRequestedSurfaceSize(width, height);
+}
+
 std::vector<std::string> Host_GetPreferredLocales()
 {
   const QStringList ui_languages = QLocale::system().uiLanguages();

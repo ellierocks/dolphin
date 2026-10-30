@@ -198,6 +198,12 @@ static WindowSystemInfo GetWindowSystemInfo(QWindow* window)
   wsi.render_surface = wsi.render_window;
 #endif
   wsi.render_surface_scale = window ? static_cast<float>(window->devicePixelRatio()) : 1.0f;
+  if (wsi.type == WindowSystemType::Wayland && window)
+  {
+    // A wl_surface can't report its size.
+    wsi.render_surface_width = static_cast<int>(window->width() * wsi.render_surface_scale);
+    wsi.render_surface_height = static_cast<int>(window->height() * wsi.render_surface_scale);
+  }
 
   return wsi;
 }

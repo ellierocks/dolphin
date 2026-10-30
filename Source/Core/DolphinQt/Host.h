@@ -34,6 +34,8 @@ public:
   void SetRenderFullscreen(bool fullscreen);
   void SetTASInputFocus(bool focus);
   void ResizeSurface(int new_width, int new_height);
+  // For window systems that can't be queried for it (Wayland). The size is in pixels.
+  void SetRenderSurfaceSize(int width, int height, float scale);
 
 signals:
   void RequestTitle(const QString& title);
